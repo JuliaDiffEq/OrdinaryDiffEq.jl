@@ -1,4 +1,4 @@
-@cache struct SSPRK22Cache{uType,rateType,StageLimiter,StepLimiter} <: OrdinaryDiffEqMutableCache
+@cache struct SSPRK22Cache{uType,rateType,StageLimiter,StepLimiter,TabType} <: OrdinaryDiffEqMutableCache
   u::uType
   uprev::uType
   k::rateType
@@ -6,9 +6,28 @@
   fsalfirst::rateType
   stage_limiter!::StageLimiter
   step_limiter!::StepLimiter
+  tab::TabType
 end
 
-struct SSPRK22ConstantCache <: OrdinaryDiffEqConstantCache end
+struct SSPRK22ConstantCache{T, T2} <: OrdinaryDiffEqConstantCache
+  α::SVector{1,T}
+  β::SVector{1,T}
+  γ::SVector{1,T}
+  stages::Int
+  c::SVector{0,T2}
+  γ0::T
+  c0::T2
+  function SSPRK22ConstantCache(::Type{T}, ::Type{T2}) where {T,T2}
+    stages = 1
+    α = @SVector T[0.5]
+    β = @SVector T[0.5]
+    γ = @SVector T[0.5]
+    c = @SVector T2[]
+    γ0 = T(1.0)
+    c0 = T2(1.0)
+    new{T,T2}(α,β,γ,stages,c,γ0,c0)
+  end
+end
 
 function alg_cache(alg::SSPRK22,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{true}})
   tmp = similar(u)
@@ -18,13 +37,14 @@ function alg_cache(alg::SSPRK22,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoU
   else
     fsalfirst = k
   end
-  SSPRK22Cache(u,uprev,k,tmp,fsalfirst,alg.stage_limiter!,alg.step_limiter!)
+  tab = SSPRK22ConstantCache(real(uBottomEltypeNoUnits), real(tTypeNoUnits))
+  SSPRK22Cache(u,uprev,k,tmp,fsalfirst,alg.stage_limiter!,alg.step_limiter!,tab)
 end
 
-alg_cache(alg::SSPRK22,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{false}}) = SSPRK22ConstantCache()
+alg_cache(alg::SSPRK22,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{false}}) = SSPRK22ConstantCache(real(uBottomEltypeNoUnits), real(tTypeNoUnits))
 
 
-@cache struct SSPRK33Cache{uType,rateType,StageLimiter,StepLimiter} <: OrdinaryDiffEqMutableCache
+@cache struct SSPRK33Cache{uType,rateType,StageLimiter,StepLimiter,TabType} <: OrdinaryDiffEqMutableCache
   u::uType
   uprev::uType
   k::rateType
@@ -32,9 +52,28 @@ alg_cache(alg::SSPRK22,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTyp
   fsalfirst::rateType
   stage_limiter!::StageLimiter
   step_limiter!::StepLimiter
+  tab::TabType
 end
 
-struct SSPRK33ConstantCache <: OrdinaryDiffEqConstantCache end
+struct SSPRK33ConstantCache{T, T2} <: OrdinaryDiffEqConstantCache
+  α::SVector{2,T}
+  β::SVector{2,T}
+  γ::SVector{2,T}
+  stages::Int
+  c::SVector{1,T2}
+  γ0::T
+  c0::T2
+  function SSPRK33ConstantCache(::Type{T}, ::Type{T2}) where {T,T2}
+    stages = 2
+    α = @SVector T[0.75, 0.33333333333333333]
+    β = @SVector T[0.25, 0.66666666666666667]
+    γ = @SVector T[0.25, 0.66666666666666667]
+    c = @SVector T2[0.5]
+    γ0 = T(1.0)
+    c0 = T2(1.0)
+    new{T,T2}(α,β,γ,stages,c,γ0,c0)
+  end
+end
 
 function alg_cache(alg::SSPRK33,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{true}})
   tmp = similar(u)
@@ -44,10 +83,11 @@ function alg_cache(alg::SSPRK33,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoU
   else
     fsalfirst = k
   end
-  SSPRK33Cache(u,uprev,k,tmp,fsalfirst,alg.stage_limiter!,alg.step_limiter!)
+  tab = SSPRK33ConstantCache(real(uBottomEltypeNoUnits), real(tTypeNoUnits))
+  SSPRK33Cache(u,uprev,k,tmp,fsalfirst,alg.stage_limiter!,alg.step_limiter!,tab)
 end
 
-alg_cache(alg::SSPRK33,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{false}}) = SSPRK33ConstantCache()
+alg_cache(alg::SSPRK33,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{false}}) = SSPRK33ConstantCache(real(uBottomEltypeNoUnits), real(tTypeNoUnits))
 
 
 @cache struct SSPRK53Cache{uType,rateType,StageLimiter,StepLimiter,TabType} <: OrdinaryDiffEqMutableCache
@@ -128,32 +168,22 @@ end
 end
 
 struct SSPRK53_2N1ConstantCache{T,T2} <: OrdinaryDiffEqConstantCache
-  α40::T
-  α43::T
-  β10::T
-  β21::T
-  β32::T
-  β43::T
-  β54::T
-  c1::T2
-  c2::T2
-  c3::T2
-  c4::T2
-
+  α::SVector{4,T}
+  β::SVector{4,T}
+  γ::SVector{4,T}
+  stages::Int
+  c::SVector{3,T2}
+  γ0::T
+  c0::T2
   function SSPRK53_2N1ConstantCache(::Type{T}, ::Type{T2}) where {T,T2}
-    α40 = T(0.571403511494104)
-    α43 = T(0.428596488505896)
-    β10 = T(0.443568244942995)
-    β21 = T(0.291111420073766)
-    β32 = T(0.270612601278217)
-    β43 = T(0.110577759392786)
-    β54 = T(0.458557505351052)
-    c1 = T2(0.443568244942995)
-    c2 = T2(0.734679665016762)
-    c3 = T2(1.005292266294979)
-    c4 = T2(0.541442494648948)
-
-    new{T,T2}(α40, α43,β10, β21, β32, β43, β54, c1, c2, c3, c4)
+    stages = 4
+    α = @SVector T[0.0, 0.0, 0.571403511494104, 0.0]
+    β = @SVector T[1.0, 1.0, 0.428596488505896, 1.0]
+    γ = @SVector T[0.291111420073766, 0.270612601278217, 0.110577759392786, 0.458557505351052]
+    c = @SVector T2[0.734679665016762, 1.005292266294979, 0.541442494648948]
+    γ0 = T(0.443568244942995)
+    c0 = T2(0.443568244942995)
+    new{T,T2}(α,β,γ,stages,c,γ0,c0)
   end
 end
 
@@ -186,36 +216,22 @@ end
 end
 
 struct SSPRK53_2N2ConstantCache{T,T2} <: OrdinaryDiffEqConstantCache
-  α30::T
-  α32::T
-  α50::T
-  α54::T
-  β10::T
-  β21::T
-  β32::T
-  β43::T
-  β54::T
-  c1::T2
-  c2::T2
-  c3::T2
-  c4::T2
-
-  function SSPRK53_2N2ConstantCache(::Type{T}, ::Type{T2}) where {T,T2}
-    α30 = T(0.682342861037239)
-    α32 = T(0.317657138962761)
-    α50 = T(0.045230974482400)
-    α54 = T(0.954769025517600)
-    β10 = T(0.465388589249323)
-    β21 = T(0.465388589249323)
-    β32 = T(0.124745797313998)
-    β43 = T(0.465388589249323)
-    β54 = T(0.154263303748666)
-    c1 = T2(0.465388589249323)
-    c2 = T2(0.930777178498646)
-    c3 = T2(0.420413812847710)
-    c4 = T2(0.885802402097033)
-
-    new{T,T2}(α30, α32,α50,α54,β10, β21, β32, β43, β54, c1, c2, c3, c4)
+  α::SVector{4,T}
+  β::SVector{4,T}
+  γ::SVector{4,T}
+  stages::Int
+  c::SVector{3,T2}
+  γ0::T
+  c0::T2
+  function SSPRK53_2N1ConstantCache(::Type{T}, ::Type{T2}) where {T,T2}
+    stages = 4
+    α = @SVector T[0.0, 0.682342861037239, 0.0, 0.045230974482400]
+    β = @SVector T[1.0, 0.317657138962761, 1.0, 0.954769025517600]
+    γ = @SVector T[0.465388589249323, 0.124745797313998, 0.465388589249323, 0.154263303748666]
+    c = @SVector T2[0.930777178498646, 0.420413812847710, 0.885802402097033]
+    γ0 = T(0.465388589249323)
+    c0 = T2(0.465388589249323)
+    new{T,T2}(α,β,γ,stages,c,γ0,c0)
   end
 end
 

@@ -1051,7 +1051,7 @@ end
   alg = unwrap_alg(integrator, true)
   ν = alg.omega*dt
   νsq = ν^2
-  β4 = (d1 + νsq*(d2 + νsq*(d3 + νsq*(d4 + νsq*(d5 + νsq*(d6 + +νsq*d7))))))/(1 + νsq*(d8 + νsq*(d9 + νsq*(d10 + νsq*(d11 + νsq*(d12 + +νsq*d13)))))) 
+  β4 = (d1 + νsq*(d2 + νsq*(d3 + νsq*(d4 + νsq*(d5 + νsq*(d6 + +νsq*d7))))))/(1 + νsq*(d8 + νsq*(d9 + νsq*(d10 + νsq*(d11 + νsq*(d12 + +νsq*d13))))))
   β5 = (e1 + νsq*(e2 + νsq*(e3 + νsq*(e4 + νsq*(e5 + νsq*e6)))))/(1 + νsq*(e8 + νsq*(e9 + νsq*(e10 + νsq*e11))))
   β6 = (f1 + νsq*(f2 + νsq*(f3 + νsq*(f4 + νsq*(f5 + νsq*f6)))))/(1 + νsq*(f8 + νsq*(f9 + νsq*(f10 + νsq*f11))))
 
@@ -1116,7 +1116,7 @@ end
 
   ν = alg.omega*dt
   νsq = ν^2
-  β4 = (d1 + νsq*(d2 + νsq*(d3 + νsq*(d4 + νsq*(d5 + νsq*(d6 + +νsq*d7))))))/(1 + νsq*(d8 + νsq*(d9 + νsq*(d10 + νsq*(d11 + νsq*(d12 + +νsq*d13)))))) 
+  β4 = (d1 + νsq*(d2 + νsq*(d3 + νsq*(d4 + νsq*(d5 + νsq*(d6 + +νsq*d7))))))/(1 + νsq*(d8 + νsq*(d9 + νsq*(d10 + νsq*(d11 + νsq*(d12 + +νsq*d13))))))
   β5 = (e1 + νsq*(e2 + νsq*(e3 + νsq*(e4 + νsq*(e5 + νsq*e6)))))/(1 + νsq*(e8 + νsq*(e9 + νsq*(e10 + νsq*e11))))
   β6 = (f1 + νsq*(f2 + νsq*(f3 + νsq*(f4 + νsq*(f5 + νsq*f6)))))/(1 + νsq*(f8 + νsq*(f9 + νsq*(f10 + νsq*f11))))
 
@@ -1136,7 +1136,7 @@ end
   f(k8, tmp, p, t+c8*dt)
   @.. u = uprev+dt*(β1*k1+β4*k4+β5*k5+β6*k6+β7*k7+β8*k8)
   f(k9, u, p, t+dt)
-  
+
   integrator.destats.nf += 8
   if integrator.opts.adaptive
     @.. utilde = dt*(β1tilde*k1 + β4tilde*k4 + β5tilde*k5 + β6tilde*k6 + β7tilde*k7 + β8tilde*k8 + β9tilde*k9)
@@ -1164,7 +1164,7 @@ end
 @muladd function perform_step!(integrator,cache::RKMConstantCache,repeat_step=false)
   @unpack t,dt,uprev,u,f,p = integrator
   @unpack α2, α3, α4, α5, α6, β1, β2, β3, β4, β6, c2, c3, c4, c5, c6 = cache
-  
+
   #k1 = f(uprev, p, t)
   k1 = integrator.fsalfirst
   k2 = f(uprev+α2*dt*k1, p, t+c2*dt)
@@ -1181,7 +1181,7 @@ end
   # integrator.k[2] = integrator.fsallast
   integrator.u = u
 end
-  
+
 function initialize!(integrator,cache::RKMCache)
   @unpack k,fsalfirst = cache
   integrator.kshortsize = 6
@@ -1196,7 +1196,7 @@ function initialize!(integrator,cache::RKMCache)
 
   integrator.destats.nf += 1
 end
-  
+
 @muladd function perform_step!(integrator,cache::RKMCache,repeat_step=false)
   @unpack t,dt,uprev,u,f,p = integrator
   @unpack tmp,fsalfirst,k,k1,k2,k3,k4,k5,k6 = cache

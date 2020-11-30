@@ -251,19 +251,19 @@ function DiffEqBase.__init(prob::Union{DiffEqBase.AbstractODEProblem,DiffEqBase.
     end
     sizehint!(timeseries,steps+1)
     sizehint!(ts,steps+1)
-    sizehint!(ks,steps+1)
+    dense && sizehint!(ks,steps+1)
   elseif save_everystep
     sizehint!(timeseries,50)
     sizehint!(ts,50)
-    sizehint!(ks,50)
+    dense && sizehint!(ks,50)
   elseif !isempty(saveat_internal)
     sizehint!(timeseries,length(saveat_internal)+1)
     sizehint!(ts,length(saveat_internal)+1)
-    sizehint!(ks,length(saveat_internal)+1)
+    dense && sizehint!(ks,length(saveat_internal)+1)
   else
     sizehint!(timeseries,2)
     sizehint!(ts,2)
-    sizehint!(ks,2)
+    dense && sizehint!(ks,2)
   end
 
   QT = if tTypeNoUnits <: Integer
@@ -311,6 +311,7 @@ function DiffEqBase.__init(prob::Union{DiffEqBase.AbstractODEProblem,DiffEqBase.
   opts = DEOptions{typeof(abstol_internal),typeof(reltol_internal),QT,tType,
                    typeof(internalnorm),typeof(internalopnorm),typeof(callbacks_internal),typeof(isoutofdomain),
                    typeof(progress_message),typeof(unstable_check),typeof(tstops_internal),
+                   typeof(saveat_internal),
                    typeof(d_discontinuities_internal),typeof(userdata),typeof(save_idxs),
                    typeof(maxiters),typeof(tstops),typeof(saveat),
                    typeof(d_discontinuities)}(
@@ -414,10 +415,10 @@ function DiffEqBase.__init(prob::Union{DiffEqBase.AbstractODEProblem,DiffEqBase.
       copyat_or_push!(ts,1,t)
       if save_idxs === nothing
         copyat_or_push!(timeseries,1,integrator.u)
-        copyat_or_push!(ks,1,[rate_prototype])
+        dense && copyat_or_push!(ks,1,[rate_prototype])
       else
         copyat_or_push!(timeseries,1,u_initial,Val{false})
-        copyat_or_push!(ks,1,[ks_prototype])
+        dense && copyat_or_push!(ks,1,[ks_prototype])
       end
     else
       saveiter = 0 # Starts at 0 so first save is at 1
@@ -513,7 +514,7 @@ function tstop_saveat_disc_handling(tstops, saveat, d_discontinuities, tspan)
   end
 
   # saving time points
-  saveat_internal = BinaryMinHeap{tType}()
+  saveat_internal = saveat === () ? () : BinaryMinHeap{tType}()
   if typeof(saveat) <: Number
     directional_saveat = tdir * abs(saveat)
     for t in (t0 + directional_saveat):directional_saveat:tf

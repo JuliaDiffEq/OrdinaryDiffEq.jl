@@ -936,20 +936,37 @@ function perform_step!(integrator,cache::QNDFCache,repeat_step=false)
     end
 
     if k > 1
-      @.. utilde = (κ*γₖ[k-1] + inv(k)) * D[k]
+      @.. utilde = (integrator.alg.kappa[k-1]*γₖ[k-1] + inv(k)) * D[k]
       calculate_residuals!(atmp, utilde, uprev, u, integrator.opts.abstol, integrator.opts.reltol, integrator.opts.internalnorm, t)
       cache.EEst1 = integrator.opts.internalnorm(atmp,t)
+    else
+      cache.EEst2 = Inf
     end
     backward_diff!(cache,D,D2,k+1,false)
     @.. tmp = u - uprev
     for i = 1:(k+1)
       @. tmp -= D2[i,1]
     end
-    @.. utilde = (κ*γₖ[k+1] + inv(k+2)) * tmp
+    if k < 5
+    @.. utilde = (integrator.alg.kappa[k+1]*γₖ[k+1] + inv(k+2)) * tmp
     calculate_residuals!(atmp, utilde, uprev, u, integrator.opts.abstol, integrator.opts.reltol, integrator.opts.internalnorm, t)
     cache.EEst2 = integrator.opts.internalnorm(atmp,t)
+    else
+      cache.EEst2 = Inf
+    end
     # cnt == 1
   end # integrator.opts.adaptive
+
+  if integrator.EEst > one(integrator.EEst)
+    for i = 1:5
+      fill!(D[i], zero(eltype(u)))
+    end
+    for i = 1:6, j = 1:6
+      fill!(D2[i,j], zero(eltype(u)))
+    end
+    fill!(R, zero(t)); fill!(U, zero(t))
+    return
+  end
 
   swap_tmp = udiff[6]
   for i = 6:-1:2

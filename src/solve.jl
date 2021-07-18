@@ -99,10 +99,9 @@ function DiffEqBase.__init(prob::Union{DiffEqBase.AbstractODEProblem,DiffEqBase.
       error("Fixed timestep methods require a choice of dt or choosing the tstops")
   end
 
-  isdae = alg isa DAEAlgorithm || (!(typeof(prob)<:DiscreteProblem) &&
-                                     prob.f.mass_matrix != I &&
-                                     !(typeof(prob.f.mass_matrix)<:Tuple) &&
-                                     ArrayInterface.issingular(prob.f.mass_matrix))
+  # check if we are working with a DAE problem
+  isdae = is_dae(prob, alg; kwargs...)
+
   if alg isa CompositeAlgorithm && alg.choice_function isa AutoSwitch
     auto = alg.choice_function
     _alg = CompositeAlgorithm(alg.algs,
@@ -498,6 +497,13 @@ end
 
 # Helpers
 
+function is_dae(prob, alg; mm_singular=nothing)
+  return alg isa DAEAlgorithm || (!(typeof(prob)<:DiscreteProblem) &&
+                                     prob.f.mass_matrix != I &&
+                                     !(typeof(prob.f.mass_matrix)<:Tuple) &&
+                                     (mm_singular === nothing ? 
+                                        ArrayInterface.issingular(prob.f.mass_matrix) : mm_singular))
+end
 
 function handle_dt!(integrator)
   if iszero(integrator.dt) && integrator.opts.adaptive
